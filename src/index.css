@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* Custom cosmic slider style */
+.cosmic-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 9999px;
+  outline: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cosmic-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #00bfff; /* Bright cyan/blue */
+  cursor: pointer;
+  box-shadow: 0 0 12px #00bfff, 0 0 4px rgba(0, 191, 255, 0.6);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.cosmic-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  background: #33ccff;
+}
+
+.cosmic-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #00bfff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 12px #00bfff, 0 0 4px rgba(0, 191, 255, 0.6);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.cosmic-slider::-moz-range-thumb:hover {
+  transform: scale(1.25);
+  background: #33ccff;
+}
+
