@@ -1,4 +1,4 @@
-import React, from "react";
+import React, { useState, useEffect } from "react";
 import { Heart, Stars, ArrowDown, ChevronUp } from "lucide-react";
 import { motion } from "motion/react";
 
