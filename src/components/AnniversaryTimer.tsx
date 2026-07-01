@@ -1,8 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Heart, Calendar, Sparkles } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+
+interface FloatingHeart {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  angle: number;
+  speed: number;
+  rotateSpeed: number;
+}
+
+function playBubbleSound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    // Quick sweet bubble pop sound sweep: 600Hz -> 1200Hz
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } catch (err) {
+    // Ignore audio failures
+  }
+}
 
 export default function AnniversaryTimer() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [hearts, setHearts] = useState<FloatingHeart[]>([]);
+
   // We can default their relationship start date to a sweet date like October 6, 2024 (e.g. Ice's 17th birthday or similar)
   // Let the user adjust this date!
   const [startDateStr, setStartDateStr] = useState("2026-07-14");
@@ -19,6 +60,54 @@ export default function AnniversaryTimer() {
   // Calculate days until birthdays
   const [iceDaysLeft, setIceDaysLeft] = useState(0);
   const [kaoDaysLeft, setKaoDaysLeft] = useState(0);
+
+  const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only trigger if clicking elements, but not inputs
+    const target = e.target as HTMLElement;
+    if (target.tagName === "INPUT" || target.closest("input") || target.closest("button")) {
+      return;
+    }
+
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    playBubbleSound();
+
+    const heartColors = [
+      "text-pink-400",
+      "text-pink-500",
+      "text-rose-400",
+      "text-rose-500",
+      "text-red-400",
+      "text-red-500",
+      "text-purple-400",
+      "text-indigo-400",
+      "text-sky-400",
+      "text-cyan-400"
+    ];
+
+    const newHearts: FloatingHeart[] = [];
+    for (let i = 0; i < 6; i++) {
+      // Upward semi-circle explosion: 200 to 340 degrees
+      const angleDeg = 200 + Math.random() * 140;
+      const angle = (angleDeg * Math.PI) / 180;
+      const speed = Math.random() * 2 + 1.5;
+      newHearts.push({
+        id: Date.now() + Math.random(),
+        x,
+        y,
+        size: Math.random() * 14 + 12, // 12px to 26px
+        color: heartColors[Math.floor(Math.random() * heartColors.length)],
+        angle,
+        speed,
+        rotateSpeed: (Math.random() - 0.5) * 8,
+      });
+    }
+
+    setHearts((prev) => [...prev, ...newHearts]);
+  };
 
   useEffect(() => {
     const calculateTime = () => {
@@ -84,7 +173,54 @@ export default function AnniversaryTimer() {
   }, [startDateStr]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 bg-white/5 border border-pink-500/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+    <div 
+      ref={containerRef}
+      onClick={handleContainerClick}
+      className="w-full max-w-4xl mx-auto bg-white/5 border border-pink-500/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl relative overflow-hidden cursor-pointer select-none"
+    >
+      {/* Floating hearts container */}
+      <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
+        <AnimatePresence>
+          {hearts.map((heart) => (
+            <motion.div
+              key={heart.id}
+              initial={{
+                opacity: 1,
+                scale: 0.6,
+                x: heart.x - heart.size / 2,
+                y: heart.y - heart.size / 2,
+                rotate: 0,
+              }}
+              animate={{
+                opacity: [1, 1, 0],
+                scale: [0.6, 1.2, 0.8],
+                x: heart.x - heart.size / 2 + Math.cos(heart.angle) * 110,
+                y: heart.y - heart.size / 2 + Math.sin(heart.angle) * 110 - 40,
+                rotate: heart.rotateSpeed * 40,
+              }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: 1.2,
+                ease: "easeOut",
+              }}
+              onAnimationComplete={() => {
+                setHearts((prev) => prev.filter((h) => h.id !== heart.id));
+              }}
+              className="absolute pointer-events-none"
+              style={{
+                left: 0,
+                top: 0,
+              }}
+            >
+              <Heart
+                className={`${heart.color} fill-current`}
+                style={{ width: heart.size, height: heart.size }}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -96,8 +232,9 @@ export default function AnniversaryTimer() {
         <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white font-sans">
           เราโคจรเคียงข้างกันมาแล้ว...
         </h2>
-        <p className="text-gray-400 text-sm mt-1">
-          จุดเริ่มต้นความทรงจำของเราสองคน
+        <p className="text-pink-300/60 text-xs mt-1.5 flex items-center justify-center gap-1 animate-pulse">
+          <Sparkles className="w-3 h-3 text-pink-400" />
+          <span>จิ้มบนการ์ดตรงไหนก็ได้เพื่อส่งสายฝนหัวใจให้คนสำคัญนะจ๊ะ 💖</span>
         </p>
       </div>
 
