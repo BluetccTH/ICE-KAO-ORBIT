@@ -76,7 +76,7 @@ export default function App() {
               className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-blue-500 p-0.5 overflow-hidden"
             >
               <img
-                src="/favicon.png"
+                src="favicon.png"
                 alt="Logo"
                 className="w-full h-full rounded-full object-cover"
               />
