@@ -10,7 +10,7 @@ export default function AudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.6);
   const [isMuted, setIsMuted] = useState(false);
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(true);
   const [interacted, setInteracted] = useState(false);
 
   const fallbackUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3";
@@ -18,34 +18,7 @@ export default function AudioPlayer() {
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
-    // Attempt autoplay if user has already interacted with the document
-    const handleFirstInteraction = () => {
-      if (!interacted && audioRef.current) {
-        setInteracted(true);
-        audioRef.current.play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch((err) => {
-            console.log("Autoplay prevented or failed:", err);
-            // If empty or blocked, we might want to switch if it's due to invalid local file
-          });
-        
-        // Remove listeners
-        window.removeEventListener("click", handleFirstInteraction);
-        window.removeEventListener("touchstart", handleFirstInteraction);
-      }
-    };
-
-    window.addEventListener("click", handleFirstInteraction);
-    window.addEventListener("touchstart", handleFirstInteraction);
-
-    return () => {
-      window.removeEventListener("click", handleFirstInteraction);
-      window.removeEventListener("touchstart", handleFirstInteraction);
-    };
-  }, [interacted]);
+  // Autoplay removed. User must click the play button themselves.
 
   useEffect(() => {
     if (audioRef.current) {
@@ -53,18 +26,9 @@ export default function AudioPlayer() {
     }
   }, [volume, isMuted]);
 
+  // Keep volume slider permanently open
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent | TouchEvent) {
-      if (volumeContainerRef.current && !volumeContainerRef.current.contains(event.target as Node)) {
-        setShowVolumeSlider(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
+    // Left empty since slider is always visible
   }, []);
 
   // When source changes, reload and play if active
@@ -132,11 +96,7 @@ export default function AudioPlayer() {
 
   const handleVolumeIconClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!showVolumeSlider) {
-      setShowVolumeSlider(true);
-    } else {
-      setIsMuted(!isMuted);
-    }
+    setIsMuted(!isMuted);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +108,7 @@ export default function AudioPlayer() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+    <div className="relative flex items-center gap-3 z-50">
       <audio
         ref={audioRef}
         src={audioSrc}
@@ -159,109 +119,99 @@ export default function AudioPlayer() {
 
       {/* Floating capsule player */}
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+        initial={{ opacity: 0, y: -10, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="flex items-center gap-2 px-3 py-2 bg-black/70 border border-white/10 hover:border-pink-500/30 rounded-full backdrop-blur-md shadow-xl shadow-black/40 transition-all duration-300"
-        onMouseEnter={() => setShowVolumeSlider(true)}
-        onMouseLeave={() => setShowVolumeSlider(false)}
+        className="flex items-center gap-3 px-4 py-2 bg-[#090d16]/85 border border-sky-500/30 rounded-2xl backdrop-blur-md shadow-lg shadow-black/40 transition-all duration-300 min-w-[280px]"
       >
-        {/* Animated Visualizer Waves */}
-        <button
-          onClick={togglePlay}
-          className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-500/80 to-blue-500/80 hover:from-pink-500 hover:to-blue-500 text-white flex items-center justify-center shadow-md transition-all cursor-pointer relative overflow-hidden"
-          title={isPlaying ? "หยุดเพลง" : "เล่นเพลงพื้นหลัง"}
-        >
-          <AnimatePresence mode="wait">
-            {isPlaying ? (
+        {/* Play Button Wrapper with Tooltip */}
+        <div className="relative">
+          {/* Tooltip speech bubble (below the button) */}
+          <AnimatePresence>
+            {!isPlaying && !interacted && (
               <motion.div
-                key="pause"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-sky-500 text-white text-[10px] sm:text-[11px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-sky-400/30 whitespace-nowrap flex items-center gap-1 animate-bounce"
+                style={{ animationDuration: "2s" }}
               >
-                <Pause className="w-4 h-4 text-white" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="play"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.15 }}
-                className="pl-0.5"
-              >
-                <Play className="w-4 h-4 text-white fill-white" />
+                <span>✨ แตะปุ่มนี้เพื่อเปิดเพลงนะคะ! 🎵</span>
+                {/* Little triangle arrow pointing up */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 translate-y-[1px] w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[5px] border-b-sky-500" />
               </motion.div>
             )}
           </AnimatePresence>
-        </button>
 
-        {/* Music Icon & Dynamic Status */}
-        <div className="flex flex-col pr-1 text-left select-none max-w-[110px] sm:max-w-[130px]">
-          <span className="text-[8px] text-gray-400 font-mono tracking-wider uppercase flex items-center gap-1">
-            <Music className={`w-2.5 h-2.5 text-pink-400 ${isPlaying ? "animate-spin" : ""}`} style={{ animationDuration: "3s" }} />
-            {isPlaying ? "Now Playing" : "Music Paused"}
-          </span>
-          <span className="text-[10px] text-white font-bold font-sans truncate tracking-tight">
-            {isUsingFallback ? "Show Me How (Cloud)" : "Show Me How"}
-          </span>
-          {/* Source Toggle Button */}
+          {/* Styled play button matching the mockup */}
           <button
-            onClick={toggleSource}
-            className="text-[8px] text-pink-300/80 hover:text-pink-300 underline text-left transition-colors cursor-pointer font-sans mt-[1px]"
-            title="สลับช่องทางเพื่อรับฟังเสียงคลาวด์/เครื่อง"
+            onClick={togglePlay}
+            className={`w-10 h-10 rounded-xl border ${
+              isPlaying
+                ? "border-pink-500/50 bg-pink-950/20 text-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.3)] animate-pulse"
+                : "border-sky-500/30 bg-sky-950/20 text-sky-400"
+            } hover:border-sky-400 hover:text-sky-300 flex items-center justify-center transition-all cursor-pointer`}
+            title={isPlaying ? "หยุดเพลง" : "เล่นเพลงพื้นหลัง"}
           >
-            {isUsingFallback ? "⚡ ใช้ไฟล์เครื่อง (เงียบ)" : "🪐 ใช้ไฟล์คลาวด์สำรอง"}
+            <AnimatePresence mode="wait">
+              {isPlaying ? (
+                <motion.div
+                  key="pause"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Pause className="w-4 h-4 text-white" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="play"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Music className="w-5 h-5 text-sky-400" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </button>
         </div>
 
-        {/* Dynamic Spectrum Wave when playing */}
-        {isPlaying && (
-          <div className="flex items-end gap-[2px] h-3 px-1.5">
-            <span className="w-[2px] bg-pink-400 rounded-full animate-pulse" style={{ height: "40%", animationDuration: "0.6s" }} />
-            <span className="w-[2px] bg-rose-400 rounded-full animate-pulse" style={{ height: "100%", animationDuration: "0.4s" }} />
-            <span className="w-[2px] bg-indigo-400 rounded-full animate-pulse" style={{ height: "70%", animationDuration: "0.5s" }} />
-            <span className="w-[2px] bg-blue-400 rounded-full animate-pulse" style={{ height: "50%", animationDuration: "0.7s" }} />
+        {/* Content Column (Title + Volume Slider) */}
+        <div className="flex flex-col gap-1 flex-1 select-none text-left min-w-0">
+          {/* Volume Icon + Song Title Row */}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <button
+              onClick={handleVolumeIconClick}
+              className="text-sky-400 hover:text-white transition-colors cursor-pointer shrink-0"
+              title={isMuted ? "เปิดเสียง" : "ปิดเสียง"}
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX className="w-3.5 h-3.5 text-pink-400" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 text-sky-400" />
+              )}
+            </button>
+            <span className="text-[11px] text-sky-300 font-bold truncate tracking-wide font-sans shrink-0">
+              {isUsingFallback ? "Show Me How (Cloud)" : "Show Me How"}
+            </span>
           </div>
-        )}
 
-        {/* Volume controls */}
-        <div ref={volumeContainerRef} className="flex items-center gap-1.5 pl-1.5 border-l border-white/10 relative">
-          <button
-            onClick={handleVolumeIconClick}
-            className="p-1 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
-            title={isMuted ? "เปิดเสียง" : "ปิดเสียง / ปรับระดับ"}
-          >
-            {isMuted || volume === 0 ? (
-              <VolumeX className="w-3.5 h-3.5 text-pink-400" />
-            ) : (
-              <Volume2 className="w-3.5 h-3.5 text-blue-400" />
-            )}
-          </button>
-
-          {/* Volume Slider - expands on hover or tap */}
-          <AnimatePresence>
-            {showVolumeSlider && (
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 85, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                className="overflow-hidden flex items-center pr-2"
-              >
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={isMuted ? 0 : volume}
-                  onChange={handleVolumeChange}
-                  className="cosmic-slider w-20 cursor-pointer"
-                  title="ระดับเสียง"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Volume Slider Row with Custom CSS Slider */}
+          <div className="flex items-center w-full pr-1">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={isMuted ? 0 : volume}
+              onChange={handleVolumeChange}
+              className="cosmic-slider w-full cursor-pointer h-1.5"
+              title="ระดับเสียง"
+            />
+          </div>
         </div>
       </motion.div>
     </div>
