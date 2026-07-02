@@ -3,7 +3,7 @@ import { ExternalLink, Globe } from "lucide-react";
 import { motion } from "motion/react";
 
 export default function PortalLink() {
-  const [url, setUrl] = useState("https://bluetccth.github.io/ICE-KAO-ORBIT/");
+  const [url, setUrl] = useState("https://bluetccth.github.io/Galaxy-Gallery/");
   const [label, setLabel] = useState("ไปยังจักรวาลถัดไป 🚀");
   const [description, setDescription] = useState("แตะเพื่อวาร์ปไปยังอีกหนึ่งดินแดนแห่งความทรงจำของเรา");
 
