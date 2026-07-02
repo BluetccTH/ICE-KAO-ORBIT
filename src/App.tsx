@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import ScrollVideo from "./components/ScrollVideo";
 import CelestialParticles from "./components/CelestialParticles";
 import AnniversaryTimer from "./components/AnniversaryTimer";
+import PortalLink from "./components/PortalLink";
 import PasscodeGate from "./components/PasscodeGate";
 import AudioPlayer from "./components/AudioPlayer";
 
@@ -173,6 +174,7 @@ export default function App() {
       >
         <div className="max-w-7xl mx-auto">
           <AnniversaryTimer />
+          <PortalLink />
         </div>
       </section>
 
