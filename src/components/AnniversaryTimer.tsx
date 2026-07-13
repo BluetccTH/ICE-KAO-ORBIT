@@ -40,9 +40,23 @@ function playBubbleSound() {
   }
 }
 
+function calculateAge(birthDateString: string) {
+  const birthDate = new Date(birthDateString);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 export default function AnniversaryTimer() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
+
+  const iceAge = calculateAge("2007-10-06");
+  const kaoAge = calculateAge("2009-04-03");
 
   // We can default their relationship start date to a sweet date like October 6, 2024 (e.g. Ice's 17th birthday or similar)
   // Let the user adjust this date!
@@ -295,7 +309,7 @@ export default function AnniversaryTimer() {
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm">วันเกิดพี่ไอซ์ 💗</h3>
-              <p className="text-xs text-gray-400 mt-0.5">วันเสาร์ที่ 6 ตุลาคม (อายุ 18)</p>
+              <p className="text-xs text-gray-400 mt-0.5">วันเสาร์ที่ 6 ตุลาคม (อายุ {iceAge})</p>
             </div>
           </div>
           <div className="text-right">
@@ -316,7 +330,7 @@ export default function AnniversaryTimer() {
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm">วันเกิดก้าว 🔭</h3>
-              <p className="text-xs text-gray-400 mt-0.5">วันศุกร์ที่ 3 เมษายน (อายุ 17)</p>
+              <p className="text-xs text-gray-400 mt-0.5">วันศุกร์ที่ 3 เมษายน (อายุ {kaoAge})</p>
             </div>
           </div>
           <div className="text-right">
